@@ -15,15 +15,18 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
     @IBOutlet weak var labelPrice: UILabel!
     @IBOutlet weak var currencyPickerView: UIPickerView!
     
-    let currencyArray = ["AUD","BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB"]
+    let currencyArray = ["AUD","BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","COP","USD","IRR"]
     
     let baseURL = "https://apiv2.bitcoinaverage.com/indices/global/ticker/BTC"
+    let baseSymbolURL = "http://www.localeplanet.com/api/auto/currencymap.json"
+    let numberFormater = NumberFormatter()
+    var currencySymbol = ""
     
     var finalURL : String?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        numberFormater.numberStyle = .decimal
         currencyPickerView.delegate = self
         currencyPickerView.dataSource = self
     }
@@ -42,14 +45,21 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         finalURL = baseURL + currencyArray[row]
-        getBitCoinData(url: finalURL!)
+        currencySymbol = currencyArray[row]
+        getBitCoinData(url: finalURL!, method: true)
+        getBitCoinData(url: baseSymbolURL, method: false)
+        
     }
     
-    func getBitCoinData(url:String){
+    func getBitCoinData(url:String, method:Bool){
         Alamofire.request(url,method:.get).responseJSON { (response) in
             if response.result.isSuccess{
                 let bitcoinJSON : JSON = JSON(response.result.value!)
-                self.updateBitcoinData(json:bitcoinJSON)
+                if method {
+                    self.updateBitcoinData(json:bitcoinJSON)
+                } else {
+                    self.updateCurrencySymbol(json:bitcoinJSON)
+                }
             } else {
                 print("Error: \(String(describing: response.result.error))")
                 self.labelPrice.text = "Se presentó un problema en la conexión"
@@ -59,10 +69,19 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
     
     func updateBitcoinData(json:JSON){
         if let bitcoinResult = json["ask"].double{
-            labelPrice.text = String(bitcoinResult)
+            labelPrice.text = numberFormater.string(from: bitcoinResult as NSNumber)
         } else {
             labelPrice.text = "Servicio no disponible"
         }
     }
+    
+    func updateCurrencySymbol(json:JSON){
+        if let data:JSON = json[currencySymbol] {
+            labelPrice.text = String(data["symbol_native"].string! + " " + labelPrice.text!);
+        } else {
+            labelPrice.text = "Servicio no disponible"
+        }
+    }
+    
 }
 

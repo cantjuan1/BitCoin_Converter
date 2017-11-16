@@ -10,4 +10,6 @@ import Foundation
 
 struct CurrencyBitcoinConverterModel{
     let currencyArray = ["AUD","BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB"]
+    
+    
 }
